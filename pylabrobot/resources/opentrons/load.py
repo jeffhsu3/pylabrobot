@@ -39,8 +39,11 @@ def ot_definition_to_resource(
   size_x = data["dimensions"]["xDimension"]
   size_y = data["dimensions"]["yDimension"]
   size_z = data["dimensions"]["zDimension"]
+  print(display_category)
+  print(data["metadata"])
+  print(dir(data["metadata"]))
 
-  if display_category in ["wellPlate", "tipRack", "tubeRack"]:
+  if display_category in ["wellPlate", "tipRack", "tubeRack", "aluminumBlock"]:
     items = data["ordering"]
     wells: List[List[Union[TipSpot, Well, Tube]]] = [] # TODO: can we use TypeGuard?
 
@@ -51,6 +54,7 @@ def ot_definition_to_resource(
       if unit == "mL":
         volume *= 1000
       return float(volume)
+
 
     for i, column in enumerate(items):
       wells.append([])
@@ -70,7 +74,7 @@ def ot_definition_to_resource(
         well_size_z = well_data["depth"]
 
         location=Coordinate(x=well_data["x"], y=well_data["y"], z=well_data["z"])
-        if display_category == "wellPlate":
+        if display_category == "wellPlate" or display_category == "aluminumBlock":
           well = Well(
             name=item,
             size_x=well_size_x,
@@ -112,7 +116,7 @@ def ot_definition_to_resource(
           tube.location = location
           wells[i].append(tube)
 
-    if display_category == "wellPlate":
+    if display_category == "wellPlate" or display_category == "aluminumBlock":
       return Plate(
         name=name,
         size_x=size_x,
