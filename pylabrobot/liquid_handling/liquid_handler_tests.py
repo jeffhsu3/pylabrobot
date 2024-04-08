@@ -279,6 +279,27 @@ class TestLiquidHandlerCommands(unittest.IsolatedAsyncioTestCase):
         "use_channels": [0], "ops": [
           Drop(tip_spot, tip=tip, offset=Coordinate(x=1, y=1, z=1))]}})
 
+  async def test_with_use_channels(self):
+    tip_spot = self.tip_rack.get_item("A1")
+    tip = tip_spot.get_tip()
+    with self.lh.use_channels([2]):
+      await self.lh.pick_up_tips([tip_spot])
+      await self.lh.drop_tips([tip_spot])
+
+    self.assertEqual(self.get_first_command("pick_up_tips"), {
+      "command": "pick_up_tips",
+      "args": (),
+      "kwargs": {
+        "use_channels": [2],
+        "ops": [
+          Pickup(tip_spot, tip=tip, offset=None)]}})
+    self.assertEqual(self.get_first_command("drop_tips"), {
+      "command": "drop_tips",
+      "args": (),
+      "kwargs": {
+        "use_channels": [2], "ops": [
+          Drop(tip_spot, tip=tip, offset=None)]}})
+
   async def test_offsets_asp_disp(self):
     well = self.plate.get_item("A1")
     well.tracker.set_liquids([(None, 10)])
@@ -507,7 +528,7 @@ class TestLiquidHandlerCommands(unittest.IsolatedAsyncioTestCase):
     tips = self.tip_rack.get_tips("A1:D1")
     await self.lh.pick_up_tips(self.tip_rack["A1", "B1", "C1", "D1"], use_channels=[0, 1, 3, 4])
     await self.lh.discard_tips()
-    offsets = self.deck.get_trash_area().get_2d_center_offsets(n=4)
+    offsets = list(reversed(self.deck.get_trash_area().centers(yn=4)))
 
     self.assertEqual(self.get_first_command("drop_tips"), {
       "command": "drop_tips",
@@ -585,13 +606,8 @@ class TestLiquidHandlerCommands(unittest.IsolatedAsyncioTestCase):
   async def test_save_state(self):
     set_volume_tracking(enabled=True)
 
-    # a mini protocol
-    self.plate.get_item("A1").tracker.set_liquids([(None, 10)])
-    await self.lh.pick_up_tips(self.tip_rack["A1"])
-    await self.lh.aspirate(self.plate["A1"], vols=10)
-    await self.lh.dispense(self.plate["A2"], vols=10)
-
-    # save the state
+    # set and save the state
+    self.plate.get_item("A2").tracker.set_liquids([(None, 10)])
     state_filename = tempfile.mktemp()
     self.lh.deck.save_state_to_file(fn=state_filename)
 
