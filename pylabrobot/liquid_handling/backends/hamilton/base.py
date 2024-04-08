@@ -6,8 +6,9 @@ import threading
 import time
 from typing import Any, Dict, List, Optional, Sequence, Tuple, TypeVar, cast
 
-from pylabrobot.liquid_handling.backends.USBBackend import USBBackend
+from pylabrobot.liquid_handling.backends.backend import LiquidHandlerBackend
 from pylabrobot.liquid_handling.standard import PipettingOp
+from pylabrobot.machines.backends import USBBackend
 from pylabrobot.resources import TipSpot, Well
 from pylabrobot.resources.ml_star import HamiltonTip, TipPickupMethod, TipSize
 
@@ -16,11 +17,7 @@ T = TypeVar("T")
 logger = logging.getLogger("pylabrobot")
 
 
-class HamiltonFirmwareError(Exception, metaclass=ABCMeta):
-  """ Base class for all Hamilton backend errors, raised by firmware. """
-
-
-class HamiltonLiquidHandler(USBBackend, metaclass=ABCMeta):
+class HamiltonLiquidHandler(LiquidHandlerBackend, USBBackend, metaclass=ABCMeta):
   """
   Abstract base class for Hamilton liquid handling robot backends.
   """
@@ -180,9 +177,6 @@ class HamiltonLiquidHandler(USBBackend, metaclass=ABCMeta):
       fmt: A format to use for the response. If `None`, the response is not parsed.
       kwargs: any named parameters. The parameter name should also be 2 characters long. The value
         can be of any size.
-
-    Raises:
-      HamiltonFirmwareError: if an error response is received.
 
     Returns:
       A dictionary containing the parsed response, or None if no response was read within `timeout`.
